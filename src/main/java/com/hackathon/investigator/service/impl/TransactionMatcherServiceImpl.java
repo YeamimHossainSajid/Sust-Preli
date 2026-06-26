@@ -72,7 +72,7 @@ public class TransactionMatcherServiceImpl implements TransactionMatcherService 
             return TransactionMatchAnalysis.noMatch();
         }
 
-        int topScore = scored.getFirst().score();
+        int topScore = scored.get(0).score();
         List<TransactionMatchResult> topMatches = scored.stream()
                 .filter(result -> result.score() == topScore)
                 .toList();
@@ -81,7 +81,7 @@ public class TransactionMatcherServiceImpl implements TransactionMatcherService 
             return TransactionMatchAnalysis.ambiguous(topMatches.size());
         }
 
-        TransactionRecord best = topMatches.getFirst().transaction();
+        TransactionRecord best = topMatches.get(0).transaction();
         boolean establishedRecipient = hasEstablishedRecipientPattern(best, transactions, complaint);
         return TransactionMatchAnalysis.resolved(best, topScore, establishedRecipient, false);
     }
