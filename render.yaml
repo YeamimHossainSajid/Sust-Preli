@@ -1,0 +1,20 @@
+# Render blueprint: connect repo and deploy as Docker web service
+services:
+  - type: web
+    name: fintech-investigator
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: AI_ENABLED
+        value: true
+      - key: AI_PROVIDER
+        value: ollama
+      - key: OLLAMA_API_KEY
+        sync: false
+      - key: OLLAMA_MODEL
+        value: gemini-3-flash-preview:cloud
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false

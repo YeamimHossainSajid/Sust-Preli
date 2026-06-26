@@ -1,0 +1,4 @@
+# Local overrides — this file is gitignored. Put your OpenAI key here for local runs.
+investigator:
+  openai:
+    api-key: your-openai-api-key-here

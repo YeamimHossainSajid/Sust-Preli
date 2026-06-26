@@ -1,0 +1,5 @@
+investigator:
+  ai:
+    enabled: false
+  openai:
+    api-key: ""
