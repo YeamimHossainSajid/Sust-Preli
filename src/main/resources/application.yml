@@ -18,6 +18,9 @@ investigator:
     drafter-model: gpt-4.1-mini
   openai:
     api-key: ${INVESTIGATOR_OPENAI_API_KEY:}
+  keep-alive:
+    url: https://sust-preli-b8l9.onrender.com/health
+    interval-ms: 300000
   queue:
     capacity: 50000
     workers: 256
