@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>com.sustpreli.render-keep-alive</string>
+    <key>ProgramArguments</key>
+    <array>
+      <string>/bin/bash</string>
+      <string>__INSTALL_DIR__/render-keep-alive.sh</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>__INSTALL_DIR__/render-keep-alive.launchd.log</string>
+    <key>StandardErrorPath</key>
+    <string>__INSTALL_DIR__/render-keep-alive.launchd.log</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+      <key>RENDER_KEEP_ALIVE_URL</key>
+      <string>https://sust-preli-b8l9.onrender.com</string>
+      <key>RENDER_KEEP_ALIVE_PATH</key>
+      <string>/health</string>
+      <key>RENDER_KEEP_ALIVE_INTERVAL</key>
+      <string>600</string>
+      <key>RENDER_KEEP_ALIVE_DAYS</key>
+      <string>12</string>
+      <key>RENDER_KEEP_ALIVE_TIMEOUT</key>
+      <string>90</string>
+      <key>RENDER_KEEP_ALIVE_LOG</key>
+      <string>__INSTALL_DIR__/render-keep-alive.log</string>
+      <key>RENDER_KEEP_ALIVE_PID</key>
+      <string>__INSTALL_DIR__/render-keep-alive.pid</string>
+    </dict>
+  </dict>
+</plist>

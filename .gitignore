@@ -19,3 +19,6 @@ target/
 .env
 .env.*
 application-local.yml
+scripts/render-keep-alive.log
+scripts/render-keep-alive.pid
+scripts/render-keep-alive.launchd.log
