@@ -16,6 +16,23 @@ Production-ready Spring Boot API for AI-powered fintech complaint investigation.
 
 Try the API interactively in [Swagger UI](https://sust-preli-b8l9.onrender.com/swagger-ui.html). The OpenAPI spec at `/v3/api-docs` can be imported into Postman, Insomnia, or code generators.
 
+### Response time & Render latency
+
+**Responses may be slow — this is expected on Render free tier, not a bug in the API logic.**
+
+| Cause | Typical delay | When it happens |
+|-------|----------------|-----------------|
+| **Render cold start** | **30–90+ seconds** | First request after the service has slept (~15 min idle). The instance must boot before any endpoint responds. |
+| **Service waking up** | **10–60 seconds** | `/health` or `/analyze-ticket` while Render is still starting the container. |
+| **LLM pipeline (2 passes)** | **5–30+ seconds** | Each `POST /analyze-ticket` when OpenAI is enabled (Investigator + Drafter). |
+| **In-memory queue wait** | Up to **120 seconds** (configurable) | Under heavy concurrent load before a worker picks up the job. |
+
+**Warm service (recent traffic + keep-alive pings):** `/health` is usually fast; `/analyze-ticket` still takes several seconds because of LLM processing.
+
+**Cold or sleeping service:** Swagger, health checks, and ticket analysis can all appear **hung or very delayed** until Render finishes starting. **Retry once** after `/health` returns `{"status":"ok"}`.
+
+Judges and testers should allow **up to 1–2 minutes** for the first call after idle periods on free tier.
+
 ### Render uptime (judge window)
 
 This service runs on **Render free tier**, which sleeps after ~15 minutes without external traffic. To keep it warm during evaluation:
@@ -25,7 +42,7 @@ This service runs on **Render free tier**, which sleeps after ~15 minutes withou
 | **[GitHub Actions keep-alive](.github/workflows/render-keep-alive.yml)** | Pings `/health` **every 5 minutes** from GitHub’s servers (external traffic). Active until **2026-07-02**. **Requires the workflow to be pushed to GitHub** and enabled under the repo **Actions** tab. |
 | **`KeepAliveScheduler` (in-app)** | Backup ping every ~9 minutes while the JVM is already running. Cannot wake the app after Render has put it to sleep. |
 
-With external pings running, the API usually responds in **seconds** for judges. The first request after a rare cold start on free tier may still take longer than 10 seconds.
+With external pings running, the service stays **warm** more often, but **`/analyze-ticket` is still not instant** because of the two-pass LLM pipeline. Cold starts on free tier can exceed **60 seconds** regardless of keep-alive gaps.
 
 ---
 
