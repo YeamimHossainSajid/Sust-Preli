@@ -1,6 +1,6 @@
 # Sust Preli — Fintech Investigator API
 
-Production-ready Spring Boot API for AI-powered fintech complaint investigation. Incoming support tickets are validated, queued, and processed through a two-pass LLM pipeline with rule-based fallback, safety guardrails, and structured JSON responses suitable for agent dashboards and customer replies.
+Production-ready Spring Boot API for AI-powered fintech complaint investigation. Built for **QueueStorm-scale load (40,000+ concurrent ticket submissions)** via an in-memory work queue, virtual-thread-friendly worker pool, and a two-pass LLM pipeline with rule-based fallback, safety guardrails, and structured JSON responses suitable for agent dashboards and customer replies.
 
 ---
 
@@ -51,7 +51,7 @@ With external pings running, the service stays **warm** more often, but **`/anal
 A single `POST /analyze-ticket` request triggers the full investigation flow:
 
 1. **Controller** parses the JSON body (supports both flat and wrapped sample formats), runs synchronous pre-queue validation, and submits the job to the in-memory work queue.
-2. **Queue** accepts up to 50,000 pending jobs and dispatches them to 256 worker threads. The HTTP request blocks until the job completes or the configured wait timeout is reached.
+2. **Queue** accepts up to **50,000** pending jobs and dispatches them to **256 worker threads** — sized for **40,000+ concurrent** campaign traffic without blocking the HTTP accept path (returns **503** only when the queue is full).
 3. **Pipeline** processes each job through validation, safety checks, two analysis passes, guardrails, and final response assembly.
 
 ### Investigation pipeline
@@ -110,6 +110,22 @@ flowchart TD
 **Request path:** Controller validates synchronously, enqueues the job, then awaits the result on the same HTTP connection (long-poll style, default 120 s).
 
 **Failure modes:** Schema errors → 400 · Semantic errors → 422 · Queue full → 503 · LLM timeout → 504 · Unexpected errors → 500.
+
+### High-concurrency design (40,000+ tickets)
+
+Designed for the **SUST CSE Carnival / QueueStorm** scenario where a campaign launch can generate tens of thousands of support tickets at once:
+
+| Component | Setting | Purpose |
+|-----------|---------|---------|
+| **Queue capacity** | 50,000 jobs | Buffer burst traffic above the 40k target with headroom |
+| **Worker pool** | 256 threads | Parallel pipeline execution across queued tickets |
+| **Enqueue timeout** | 100 ms | Fail fast with **503** instead of hanging when saturated |
+| **HTTP wait** | 120 s default | Client long-polls for completion on the same connection |
+| **Pipeline timeout** | 90 s | Per-ticket ceiling; each LLM pass gets half |
+
+Requests are **accepted asynchronously**: validation runs on the servlet thread, then work is handed to the queue so Tomcat can keep accepting new connections during spikes. Rule-based fallback ensures throughput continues if OpenAI rate-limits or times out under load.
+
+**Note:** Render free-tier hosting adds **platform cold-start latency** on top of queue/LLM time — see [Response time & Render latency](#response-time--render-latency) above.
 
 ---
 
@@ -307,6 +323,58 @@ mvn test
 ```
 
 Tests cover transaction matching, evidence evaluation, semantic validation, safety filtering, queue behavior, and REST integration.
+
+---
+
+## Pipeline Visual Guide
+
+Sequential overview of the **AI Ticket Analysis Pipeline** (SUST Carnival 2026 / QueueStorm).
+
+### 1. Automating the Chaos — The Catalyst & Mission
+
+Campaign-scale load (**40,000+ tickets**) funneled through a dual-LLM copilot that investigates and resolves disputes in under 30 seconds per ticket (pipeline ceiling), without exposing credentials.
+
+![Automating the Chaos — AI Ticket Analysis Pipeline](docs/images/01-automating-the-chaos.png)
+
+### 2. Micro-to-Macro Pipeline Flow
+
+Five stages: **Filters** → **Investigator (fast model)** → **Drafter (smarter model)** → **Shield (post-flight)** → **Payload (final JSON)**.
+
+![Micro-to-Macro Pipeline Flow](docs/images/02-micro-to-macro-pipeline.png)
+
+### 3. Stage 1 — Ingest, Validate, and Neutralize
+
+Schema validation (400), semantic integrity (422), and pre-flight prompt-injection / adversarial detection before the LLM passes run.
+
+![Stage 1 — Ingest, Validate, and Neutralize](docs/images/03-stage-1-ingest-validate-neutralize.png)
+
+### 4. The Investigator's Twist — Evidence over Assumption
+
+Pass 1 correlates the customer's narrative against transaction logs → `consistent`, `inconsistent`, or `insufficient_data`.
+
+![The Investigator's Twist — Evidence over Assumption](docs/images/04-investigator-evidence-over-assumption.png)
+
+### 5. Stage 4 — Post-Flight Safety Guardrails
+
+Credential scrub, financial-authority sieve (no unauthorized refund promises), and channel-integrity checks on every draft.
+
+![Stage 4 — Post-Flight Safety Guardrails](docs/images/05-stage-4-post-flight-guardrails.png)
+
+### 6. Stage 5 — Final Validation & Payload Assembly
+
+Strict enum enforcement, structural completeness, fallback defaults, and clean `AnalyzeTicketResponse` JSON (200 OK).
+
+![Stage 5 — Final Validation & Payload Assembly](docs/images/06-stage-5-final-validation.png)
+
+### 7. Operational Guarantees
+
+| Guarantee | Behavior |
+|-----------|----------|
+| **Timeout management** | Dual-pass LLM within the configured **90 s** pipeline ceiling (30 s per-pass budget) |
+| **Graceful degradation** | LLM failure → rule-based fallback; `human_review_required` when uncertain |
+| **Error handling** | Global handler returns safe **500** JSON (no stack traces); `/health` stays available |
+
+![Operational Guarantees](docs/images/07-operational-guarantees.png)
 
 ---
 
