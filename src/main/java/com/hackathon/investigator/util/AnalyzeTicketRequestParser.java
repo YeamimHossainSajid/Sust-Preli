@@ -7,6 +7,8 @@ import com.hackathon.investigator.dto.AnalyzeTicketRequest;
 import com.hackathon.investigator.dto.ErrorResponse;
 import com.hackathon.investigator.exception.SchemaValidationException;
 
+import java.util.List;
+
 public final class AnalyzeTicketRequestParser {
 
     private AnalyzeTicketRequestParser() {
@@ -28,13 +30,14 @@ public final class AnalyzeTicketRequestParser {
         try {
             body = objectMapper.readTree(rawBody);
         } catch (JsonProcessingException ex) {
+            JsonRequestErrorMapper.FriendlyJsonError friendly = JsonRequestErrorMapper.toFriendlyError(ex);
             throw new SchemaValidationException(new ErrorResponse(
                     400,
                     "Bad Request",
-                    formatJsonError(ex),
+                    friendly.message(),
                     "/analyze-ticket",
                     java.time.Instant.now(),
-                    null
+                    friendly.fieldErrors()
             ));
         }
 
@@ -55,28 +58,34 @@ public final class AnalyzeTicketRequestParser {
 
         JsonNode payload = unwrapTicketPayload(body);
 
-        try {
-            return objectMapper.treeToValue(payload, AnalyzeTicketRequest.class);
-        } catch (JsonProcessingException ex) {
+        if (!payload.isObject()) {
             throw new SchemaValidationException(new ErrorResponse(
                     400,
                     "Bad Request",
-                    "Invalid request JSON: " + resolveMessage(ex),
+                    "Invalid JSON structure. Send a JSON object with ticket fields, not a plain string or array.",
                     "/analyze-ticket",
                     java.time.Instant.now(),
-                    null
+                    List.of(new ErrorResponse.FieldErrorDetail(
+                            "body",
+                            "Use {\"ticket_id\":\"...\",\"complaint\":\"...\", ...} or wrap fields in \"request\" / \"input\".",
+                            null
+                    ))
             ));
         }
-    }
 
-    private static String formatJsonError(JsonProcessingException ex) {
-        String detail = resolveMessage(ex);
-        if (detail.contains("Unexpected end-of-input")) {
-            return "Malformed JSON (incomplete body). Ensure every `{` has a matching `}` and the payload is not truncated. "
-                    + detail;
+        try {
+            return objectMapper.treeToValue(payload, AnalyzeTicketRequest.class);
+        } catch (JsonProcessingException ex) {
+            JsonRequestErrorMapper.FriendlyJsonError friendly = JsonRequestErrorMapper.toFriendlyError(ex);
+            throw new SchemaValidationException(new ErrorResponse(
+                    400,
+                    "Bad Request",
+                    friendly.message(),
+                    "/analyze-ticket",
+                    java.time.Instant.now(),
+                    friendly.fieldErrors()
+            ));
         }
-        return "Malformed JSON. Send valid JSON with ticket fields at the root or inside an `input` or `request` object. "
-                + detail;
     }
 
     private static JsonNode unwrapTicketPayload(JsonNode body) {
@@ -87,12 +96,5 @@ public final class AnalyzeTicketRequestParser {
             return body.get("request");
         }
         return body;
-    }
-
-    private static String resolveMessage(JsonProcessingException ex) {
-        if (ex.getOriginalMessage() != null && !ex.getOriginalMessage().isBlank()) {
-            return ex.getOriginalMessage();
-        }
-        return "Check field names, enum values (type/status), and ISO-8601 timestamps";
     }
 }

@@ -1,5 +1,8 @@
 # Sust Preli — Fintech Investigator API
 
+[![Hosted API Status](https://github.com/YeamimHossainSajid/Sust-Preli/actions/workflows/hosted-api-status.yml/badge.svg?branch=main)](https://github.com/YeamimHossainSajid/Sust-Preli/actions/workflows/hosted-api-status.yml)
+[![Render Keep Alive](https://github.com/YeamimHossainSajid/Sust-Preli/actions/workflows/render-keep-alive.yml/badge.svg?branch=main)](https://github.com/YeamimHossainSajid/Sust-Preli/actions/workflows/render-keep-alive.yml)
+
 Production-ready Spring Boot API for AI-powered fintech complaint investigation. Built for **QueueStorm-scale load (40,000+ concurrent ticket submissions)** via an in-memory work queue, virtual-thread-friendly worker pool, and a two-pass LLM pipeline with rule-based fallback, safety guardrails, and structured JSON responses suitable for agent dashboards and customer replies.
 
 ---
@@ -32,6 +35,19 @@ Try the API interactively in [Swagger UI](https://sust-preli-b8l9.onrender.com/s
 **Cold or sleeping service:** Swagger, health checks, and ticket analysis can all appear **hung or very delayed** until Render finishes starting. **Retry once** after `/health` returns `{"status":"ok"}`.
 
 Judges and testers should allow **up to 1–2 minutes** for the first call after idle periods on free tier.
+
+### Deployment status (for judges)
+
+Green badges above = **production is hosted on Render and responding**. Click a badge to open **GitHub Actions** and see run history with a detailed summary table.
+
+| Workflow | Purpose | When it runs |
+|----------|---------|--------------|
+| **[Hosted API Status](.github/workflows/hosted-api-status.yml)** | Verifies `/health`, Swagger, and OpenAPI are live | Every **push to `main`**, **hourly**, and **manual** |
+| **[Render Keep Alive](.github/workflows/render-keep-alive.yml)** | Pings `/health` every 5 min to reduce Render sleep | Every **5 minutes** until **2026-07-02** |
+
+**To show judges:** open **Actions** → **Hosted API Status (Render)** → latest run with green ✓ → expand **Summary** for the hosted checklist.
+
+**First-time setup:** GitHub **Settings → Actions → General** → allow actions, then push to `main` or click **Run workflow**.
 
 ### Render uptime (judge window)
 

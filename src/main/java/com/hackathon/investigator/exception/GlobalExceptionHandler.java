@@ -103,9 +103,13 @@ public class GlobalExceptionHandler {
         return buildResponse(
                 HttpStatus.BAD_REQUEST,
                 "Bad Request",
-                "Malformed JSON request body. Send valid JSON with ticket fields at the root or inside an `input` object.",
+                "Invalid JSON body. Send a JSON object with ticket_id, complaint, and transaction_history (or wrap fields in request / input).",
                 request.getRequestURI(),
-                List.of(new ErrorResponse.FieldErrorDetail("body", detail, null))
+                List.of(new ErrorResponse.FieldErrorDetail(
+                        "body",
+                        "Check JSON syntax and field types in Swagger before retrying.",
+                        null
+                ))
         );
     }
 
