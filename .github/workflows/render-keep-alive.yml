@@ -1,0 +1,32 @@
+name: Render Keep Alive (Judge Window)
+
+# External pings keep the Render free-tier service warm. In-app @Scheduled alone
+# cannot wake a sleeping instance because the JVM is stopped while asleep.
+
+on:
+  schedule:
+    # Every 5 minutes (Render free tier sleeps after ~15 min idle)
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+env:
+  RENDER_HEALTH_URL: https://sust-preli-b8l9.onrender.com/health
+  KEEP_ALIVE_UNTIL: "2026-07-02"
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping Render health (5-day judge window)
+        run: |
+          set -euo pipefail
+          END_EPOCH=$(date -u -d "${KEEP_ALIVE_UNTIL} 00:00:00" +%s)
+          NOW_EPOCH=$(date -u +%s)
+          if [ "$NOW_EPOCH" -ge "$END_EPOCH" ]; then
+            echo "Keep-alive window ended on ${KEEP_ALIVE_UNTIL}. Skipping."
+            exit 0
+          fi
+          echo "Pinging ${RENDER_HEALTH_URL} at $(date -u -Iseconds)"
+          curl -fsS --retry 3 --retry-delay 10 --max-time 90 "${RENDER_HEALTH_URL}"
+          echo "Ping OK"

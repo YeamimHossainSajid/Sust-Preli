@@ -16,6 +16,17 @@ Production-ready Spring Boot API for AI-powered fintech complaint investigation.
 
 Try the API interactively in [Swagger UI](https://sust-preli-b8l9.onrender.com/swagger-ui.html). The OpenAPI spec at `/v3/api-docs` can be imported into Postman, Insomnia, or code generators.
 
+### Render uptime (judge window)
+
+This service runs on **Render free tier**, which sleeps after ~15 minutes without external traffic. To keep it warm during evaluation:
+
+| Mechanism | What it does |
+|-----------|----------------|
+| **[GitHub Actions keep-alive](.github/workflows/render-keep-alive.yml)** | Pings `/health` **every 5 minutes** from GitHub’s servers (external traffic). Active until **2026-07-02**. **Requires the workflow to be pushed to GitHub** and enabled under the repo **Actions** tab. |
+| **`KeepAliveScheduler` (in-app)** | Backup ping every ~9 minutes while the JVM is already running. Cannot wake the app after Render has put it to sleep. |
+
+With external pings running, the API usually responds in **seconds** for judges. The first request after a rare cold start on free tier may still take longer than 10 seconds.
+
 ---
 
 ## How It Works

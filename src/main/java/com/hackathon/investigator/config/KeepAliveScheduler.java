@@ -17,7 +17,7 @@ public class KeepAliveScheduler {
     @Value("${investigator.keep-alive.url:https://sust-preli-b8l9.onrender.com/health}")
     private String healthCheckUrl;
 
-    @Scheduled(fixedRateString = "${investigator.keep-alive.interval-ms:300000}")
+    @Scheduled(fixedRateString = "${investigator.keep-alive.interval-ms:540000}")
     public void pingBackend() {
         try {
             restTemplate.getForObject(healthCheckUrl, String.class);

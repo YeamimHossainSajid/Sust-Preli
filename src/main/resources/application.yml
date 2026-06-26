@@ -20,7 +20,7 @@ investigator:
     api-key: ${INVESTIGATOR_OPENAI_API_KEY:}
   keep-alive:
     url: https://sust-preli-b8l9.onrender.com/health
-    interval-ms: 300000
+    interval-ms: 540000
   queue:
     capacity: 50000
     workers: 256
