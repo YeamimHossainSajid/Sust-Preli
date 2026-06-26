@@ -45,8 +45,6 @@ Green badges above = **production is hosted on Render and responding**. Click a 
 | **[Hosted API Status](.github/workflows/hosted-api-status.yml)** | Verifies `/health`, Swagger, and OpenAPI are live | Every **push to `main`**, **hourly**, and **manual** |
 | **[Render Keep Alive](.github/workflows/render-keep-alive.yml)** | Pings `/health` every 5 min to reduce Render sleep | Every **5 minutes** until **2026-07-02** |
 
-**To show judges:** open **Actions** → **Hosted API Status (Render)** → latest run with green ✓ → expand **Summary** for the hosted checklist.
-
 **First-time setup:** GitHub **Settings → Actions → General** → allow actions, then push to `main` or click **Run workflow**.
 
 ### Render uptime (judge window)
